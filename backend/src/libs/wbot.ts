@@ -7,7 +7,8 @@ import makeWASocket, {
   makeCacheableSignalKeyStore,
   makeInMemoryStore,
   isJidBroadcast,
-  CacheStore
+  CacheStore,
+  jidNormalizedUser
 } from "@whiskeysockets/baileys";
 import makeWALegacySocket from "@whiskeysockets/baileys";
 import P from "pino";
@@ -104,45 +105,22 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
           },
-          version: [2,2413,1],
-          // defaultQueryTimeoutMs: 60000,
+          version: [2, 3000, 1015901307],
+          defaultQueryTimeoutMs: undefined,
           // retryRequestDelayMs: 250,
           // keepAliveIntervalMs: 1000 * 60 * 10 * 3,
           msgRetryCounterCache,
-          shouldIgnoreJid: jid => isJidBroadcast(jid),
+          shouldIgnoreJid: jid => isJidBroadcast(jid) || jid.endsWith("@newsletter") || jid.endsWith("@g.us"),
+          getMessage: async (key) => {
+
+            let jid = jidNormalizedUser(key.remoteJid);
+            let msg = await store.loadMessage(jid, key.id);
+
+            return msg?.message || "";
+          },
         });
 
-        // wsocket = makeWASocket({
-        //   version,
-        //   logger: loggerBaileys,
-        //   printQRInTerminal: false,
-        //   auth: state as AuthenticationState,
-        //   generateHighQualityLinkPreview: false,
-        //   shouldIgnoreJid: jid => isJidBroadcast(jid),
-        //   browser: ["Chat", "Chrome", "10.15.7"],
-        //   patchMessageBeforeSending: (message) => {
-        //     const requiresPatch = !!(
-        //       message.buttonsMessage ||
-        //       // || message.templateMessage
-        //       message.listMessage
-        //     );
-        //     if (requiresPatch) {
-        //       message = {
-        //         viewOnceMessage: {
-        //           message: {
-        //             messageContextInfo: {
-        //               deviceListMetadataVersion: 2,
-        //               deviceListMetadata: {},
-        //             },
-        //             ...message,
-        //           },
-        //         },
-        //       };
-        //     }
 
-        //     return message;
-        //   },
-        // })
 
         wsocket.ev.on(
           "connection.update",
