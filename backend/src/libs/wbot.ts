@@ -10,8 +10,6 @@ import makeWASocket, {
   CacheStore,
   jidNormalizedUser
 } from "@whiskeysockets/baileys";
-import makeWALegacySocket from "@whiskeysockets/baileys";
-import P from "pino";
 
 import Whatsapp from "../models/Whatsapp";
 import { logger } from "../utils/logger";
